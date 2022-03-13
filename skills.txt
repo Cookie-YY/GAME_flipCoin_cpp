@@ -1,0 +1,174 @@
+界面设置
+    主界面设置
+        // 大小
+        setFixedSize(320, 500);
+        // 图标
+        setWindowIcon(QIcon(":/res/Coin0001.png"));
+        // 标题
+        setWindowTitle("翻金币——by Cookie");
+    工具栏设置
+        方法1: UI拖拽
+            1. ui界面拖拽，需要双击ui文件
+                主菜单可以直接中文
+                下拉菜单，需要先写英文，在text一栏改成中文
+                编辑完成，需要编译一下才有提示
+            2. 编写功能函数
+                connect(ui->actionquit, &QAction::triggered, [=](){  // mac 在顶端，win在界面上
+                    this->close();
+                });
+                1. ui->actionquit  
+                2. &QAction::triggered   发送的信号，QAction在ui文件中看
+                3. [=](){}  匿名函数   this.close(); 关闭界面
+        方法2: 手写
+            QMenuBar * bar = menuBar();
+            setMenuBar(bar);
+            QMenu * startMenu = bar->addMenu("开始");
+            QAction * actionquit = startMenu->addAction("退出");
+            // 菜单栏退出按钮
+            connect(actionquit, &QAction::triggered, [=](){  // mac 在顶端，win在界面上
+                this->close();
+            });
+
+资源设置
+    添加资源文件
+        1. Add new -> qt -> qt resource file
+        2. 资源栏添加名称
+        3. 得到一个res.qrc的文件
+            添加前缀：用于区分不同资源
+            添加文件：把所有文件添加进去
+    背景图片
+        1. mainWindow.h头文件中添加 paintEvent对象，一进来就会触发的那种，适合写背景
+            void paintEvent(QPaintEvent *);
+        2. mainWindow.cpp中重写
+            void MainWindow::paintEvent(QPaintEvent *)
+            {
+                    QPainter painter(this);  // 找一个画家 QPainter对象
+                    QPixmap pix;  // 画的对象
+                    // pix = pix.scaled(this.width()/2, this.height()/2);  拉伸
+                    pix.load(":/res/PlayLevelSceneBg.png"); // 加载资源文件
+                    painter.drawPixmap(0,0, this->width(), this->height(), pix);  // 拉伸画背景
+            }
+            * 拉伸 pix = pix.scaled(this.width()/2, this.height()/2);
+            * 屏幕适应 painter.drawPixmap(0,0, this->width(), this->height(), pix);
+    音效
+        1. proj文件包含 multimedia
+            QT       += core gui multimedia
+        2. 加载音效文件
+            QSound * startSound = new QSound(":/res/TapButtonSound.wav", this);  // this让谁放，放到对象树中
+        3. 设置循环
+            startSound->setLoops(10);   // setLoops(-1)表示无限循环
+        4. 播放
+            startSound->play();
+
+封装组件
+    1. 添加一个C++ class
+    2. 写名字，继承 QWidget
+    3. 头文件中
+        修改继承
+            #include <QWidget>   ->   #include <QPushButton>
+            class MyPushButton : public QWidget  ->  class MyPushButton : public QPushButton
+            注释掉自动添加的explicit开头的构造函数(隐式类型转换)
+            自己定义一个构造函数: MyPushButton(QString normalImg, QString pressImg="");
+    4. cpp文件中，实现自己写的构造函数
+        MyPushButton::MyPushButton(QString normalImg, QString pressImg)
+
+动画效果
+    QPropertyAnimation
+        起点、终点
+                QPropertyAnimation * animation1 = new QPropertyAnimation(this, "geometry");
+                animation1->setStartValue(QRect(this->x(), this->y(), this->width(), this->height()));  // 左上角的坐标， 矩形的大小
+                animation1->setEndValue(QRect(this->x(), this->y()+10, this->width(), this->height()));
+        变化曲线、时间
+                animation1->setEasingCurve(QEasingCurve::OutBounce);
+                animation1->setDuration(200);  // 200ms
+    重写鼠标的按下和弹起效果
+        注意最后需要返回方法，让弹起或按下能够继续
+        void mousePressEvent(QMouseEvent *e);  // 鼠标按下
+            return QPushButton::mousePressEvent(e);
+        void mouseReleaseEvent(QMouseEvent *e);  // 鼠标弹起
+            return QPushButton::mouseReleaseEvent(e);
+    照片连续加载
+        声明循环计时器：
+            timer1 = new QTimer(this);
+        绑定方法：
+            connect(timer1, &QTimer::timeout, [=](){
+                // 这里进行加载不同的图片，并定义边界条件：timer2->stop();
+            }
+        启动计时器
+            timer1->start(30);
+页面切换
+    1. 父窗口的头文件需要有子窗口的对象    new出来的对象可以show和hide
+        1. main中包含关卡选择
+            LevelWindow * levelWindow = NULL;
+        2. 关卡选择包含游戏窗口
+            PlayWindow * play = NULL;
+    2. 切换时要把切换后的窗口弄成和之前一样
+    父 到 子：
+        父: 子->setGeometry(父.geometry()); 子->show; 父->hide();
+    子 到 父:
+        子: 发送信号
+        父: 
+            父->setGeometry(子.geometry());
+            父->show();   子->hide();    // 保留页面, 返回只隐藏
+            delete 子;    子 = NULL;     // 很多关卡, 返回即删除
+
+点击事件穿透
+    label控件的parent是this，button控件的parent也是this，label会覆盖掉button控件的点击事件
+    方法1. lebel控件的parent设置成button
+    方法2. 点击事件穿透: 
+        label->setAttribute(QT::WA_TransparentForMouseEvents);  // 51号属性
+
+label文字
+    #include <QLabel>
+    // 创建
+    QLabel * label = new QLabel;
+    label->setParent(this);
+    // 字体字号
+    QFont font;
+    font.setFamily("华文新魏");
+    font.setPointSize(20);
+    QString str = QString("Level: %1").arg(this->levelIndex);
+    // 设置属性
+    label->setFont(font);
+    label->setText(str);
+    label->setGeometry(30, this->height()-50, 120,50);
+
+发布
+    1. 切换版本: 左下角电脑的图标
+        debug->release 
+    2. 点击小锤子进行编译
+    3. 点击小三角进行运行
+    4. 回到文件夹中的源代码的上级目录
+        拷贝xxx.exe(win)   xxx.app(mac) 到一个文件夹
+    5. 打包
+        macdeployqt xxx.app
+            /Users/${USER}/Qt5.9.7/5.9.7/clang_64/bin/macdeployqt
+        windeployqt xxx.exe  得到完整的文件
+    6. hm nis edit开源软件可以制作安装程序（win）
+
+知识点
+    封装自定义控件
+        先写一个继承的，然后自己在头文件中修改
+    背景图片在 头文件中声明画画对象，cpp中重写，用画家
+    默认值问题: 声明和实现只能有一个有
+    覆盖自定义事件
+        void paintEvent(QPaintEvent *);  // 加载背景
+        void mousePressEvent(QMouseEvent *e);  // 鼠标按下
+        void mouseReleaseEvent(QMouseEvent *e);  // 鼠标弹起
+    一层循环实现矩阵
+        for (int i=0; i<16; i++)
+        {
+            if (this->gameArray[i%4][i/4]==0)  // 有反面
+            {
+                return;
+            }
+        }
+    setAttribute
+        51号属性: 穿透点击事件  给按钮上的label用  关卡选择label显示数字
+        55号属性: 关闭即销毁
+    对齐方式
+        label->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+    实现等待一个动画执行完才能触发另一个动画
+        1. 维护住 isAnimation 的属性，并重写mousePressEvent方法
+            翻完了isAnimation是false，翻的时候 isAnimation 是true
+        2. 做动画之前判断一下是否是 this.min是不是1 this.max是不是8
