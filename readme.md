@@ -1,9 +1,12 @@
 # 背景说明
 这是一个基于QT5.9的翻金币游戏，[技巧总结](./skills.txt) 列出了开发过程中遇到的常见功能的实现方法\
 参考资料：[B站：最新QT从入门到实战完整版|传智教育](https://www.bilibili.com/video/BV1g4411H78N?p=1)
-
-
-<center><img src="./flipCoinDemo.png" width="30%" /></center>
+<center>
+    <img src="./flipCoinDemo1.png" width="24%" />
+    <img src="./flipCoinDemo2.png" width="24%" />
+    <img src="./flipCoinDemo3.png" width="24%" />
+    <img src="./flipCoinDemo4.png" width="24%" />
+</center>
 
 
 # 项目架构
